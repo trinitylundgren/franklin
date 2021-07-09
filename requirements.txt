@@ -1,0 +1,4 @@
+numpy==1.21.0
+opencv-python-headless==4.5.2.54
+spidev==3.5
+unicornhathd==0.0.4
