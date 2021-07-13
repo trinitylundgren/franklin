@@ -8,7 +8,8 @@ g_display_width, g_display_height = unicornhathd.get_shape()
 
 g_sprite_sheet = '/home/ubuntu/environments/img/franklin-sprite-sheet.png'
 g_sprite_metadata = {
-        "bubble-loop": [(0, 0), (16, 0), (32, 0), (48, 0)]}
+        "bubble-loop": [(0, 0), (16, 0), (32, 0), (48, 0), (0,0)],
+        "fall": [(0, 16), (16, 16), (32, 16), (48, 16), (64, 16), (80, 16), (96, 16)]}
 
 class Franklin:
     def __init__(self, sprite_sheet, sprite_sheet_metadata):
@@ -18,17 +19,44 @@ class Franklin:
     
     def bubble_loop(self):
         bubble = self.sprite_metadata["bubble-loop"]
-        try:
-            bubble_frame = 0
-            while True:
-                display_sprite(bubble[bubble_frame], self.sprite_pixels)
-                time.sleep(0.5)
-                bubble_frame = (bubble_frame + 1) % len(bubble)
-        except KeyboardInterrupt:
-            return
+
+        for frame in bubble:
+            display_sprite(frame, self.sprite_pixels)
+            time.sleep(0.5)
+
+    def swim_loop(self):
+        swim = self.sprite_metadata["fall"]
+        
+        # Initialize the loop.
+        swim_frame = 2  # Start Franklin in the natural position.
+        fall, rise = 1, -1
+        direction = fall
+        
+        for i in range(13):
+            display_sprite(swim[swim_frame])
+            
+            # Franklin falls slowly and rises quickly.
+            sleep(0.5) if direction == fall else sleep(0.1)
+            
+            # Change direction if needed.
+            if direction == fall and swim_frame == len(swim):
+                direction = rise
+            if direction == rise and swim_frame == 0:
+                direction = fall
+
+            # Advance to the next frame.
+            swim_frame += direction        
 
     def run(self):
-        self.bubble_loop()
+        try:
+            while True:
+                self.bubble_loop()
+                self.bubble_loop()
+                self.swim_loop()
+                self.swim_loop()
+        
+        except KeyboardInterrupt:
+            return
 
 def display_sprite(start_xy, pixels):
     for x in range(g_display_width):
