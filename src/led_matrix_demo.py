@@ -7,13 +7,15 @@ import time
 import unicornhathd
 
 
-print("""Unicorn HAT HD: demo.py
+print(
+    """Unicorn HAT HD: demo.py
 
 This pixel shading demo transitions between 4 classic graphics demo effects.
 
 Press Ctrl+C to exit!
 
-""")
+"""
+)
 
 unicornhathd.rotation(0)
 unicornhathd.brightness(0.6)
@@ -35,8 +37,8 @@ def gradient(x, y, step):
 
 # twisty swirly goodness
 def swirl(x, y, step):
-    x -= (u_width / 2)
-    y -= (u_height / 2)
+    x -= u_width / 2
+    y -= u_height / 2
     dist = math.sqrt(pow(x, 2) + pow(y, 2)) / 2.0
     angle = (step / 10.0) + (dist * 1.5)
     s = math.sin(angle)
@@ -51,9 +53,9 @@ def swirl(x, y, step):
 
 # roto-zooming checker board
 def checker(x, y, step):
-    x -= (u_width / 2)
-    y -= (u_height / 2)
-    angle = (step / 10.0)
+    x -= u_width / 2
+    y -= u_height / 2
+    angle = step / 10.0
     s = math.sin(angle)
     c = math.cos(angle)
     xs = x * c - y * s
@@ -67,19 +69,25 @@ def checker(x, y, step):
     ys *= scale
     xo = abs(xs) - int(abs(xs))
     yo = abs(ys) - int(abs(ys))
-    v = 0 if (math.floor(xs) + math.floor(ys)) % 2 else 1 if xo > .1 and yo > .1 else .5
+    v = (
+        0
+        if (math.floor(xs) + math.floor(ys)) % 2
+        else 1
+        if xo > 0.1 and yo > 0.1
+        else 0.5
+    )
     r, g, b = hue_to_rgb[step % 255]
     return (r * (v * 255), g * (v * 255), b * (v * 255))
 
 
 # weeee waaaah
 def blues_and_twos(x, y, step):
-    x -= (u_width / 2)
-    y -= (u_height / 2)
+    x -= u_width / 2
+    y -= u_height / 2
     scale = math.sin(step / 6.0) / 1.5
     r = math.sin((x * scale) / 1.0) + math.cos((y * scale) / 1.0)
     b = math.sin(x * scale / 2.0) + math.cos(y * scale / 2.0)
-    g = r - .8
+    g = r - 0.8
     g = 0 if g < 0 else g
     b -= r
     b /= 1.4
@@ -100,8 +108,8 @@ def rainbow_search(x, y, step):
 # zoom tunnel
 def tunnel(x, y, step):
     speed = step / 100.0
-    x -= (u_width / 2)
-    y -= (u_height / 2)
+    x -= u_width / 2
+    y -= u_height / 2
     xo = math.sin(step / 27.0) * 2
     yo = math.cos(step / 18.0) * 2
     x += xo
@@ -110,7 +118,7 @@ def tunnel(x, y, step):
         if x < 0:
             angle = -(math.pi / 2)
         else:
-            angle = (math.pi / 2)
+            angle = math.pi / 2
     else:
         angle = math.atan(x / y)
     if y > 0:
@@ -126,7 +134,7 @@ def tunnel(x, y, step):
     col2 = hue_to_rgb[step % 255]
     col2 = (col2[0] * 0.3, col2[1] * 0.3, col2[2] * 0.3)
     col = col1 if int(abs(angle * 6.0)) % 2 == 0 else col2
-    td = .3 if int(abs(depth * 3.0)) % 2 == 0 else 0
+    td = 0.3 if int(abs(depth * 3.0)) % 2 == 0 else 0
     col = (col[0] + td, col[1] + td, col[2] + td)
     col = (col[0] * shade, col[1] * shade, col[2] * shade)
     return (col[0] * 255, col[1] * 255, col[2] * 255)
