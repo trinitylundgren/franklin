@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from PIL import Image
+from precise_runner import PreciseEngine, PreciseRunner
 import time
 import unicornhathd
 
@@ -8,7 +9,7 @@ g_display_width, g_display_height = unicornhathd.get_shape()
 
 g_sprite_sheet = "/home/ubuntu/environments/img/franklin-sprite-sheet.png"
 g_sprite_metadata = {
-    "bubble-loop": [(0, 0), (16, 0), (32, 0)],
+    "bubble-loop": [(0, 0, 10), (16, 0, 10), (32, 0, 10)],
     "fall": [
         (0, 16),
         (16, 16),
@@ -19,13 +20,38 @@ g_sprite_metadata = {
         (96, 16),
         (112, 16),
     ],
+    "startle": [(0, 32, 1)],
 }
+
+
+class Animation:
+    def __init__(self, frames):
+        self.frames = frames
+        self.total_length = sum([frame[2] for frame in self.frames])
+
+    def get_frame(self, frame_number):
+        frame_number = frame_number % self.total_length
+        for frame in self.frames:
+            if frame_number < frame[2]:
+                return (frame[0], frame[1])
+            frame_number -= frame[2]
+
 
 class Franklin:
     def __init__(self, sprite_sheet, sprite_sheet_metadata):
         sprites = Image.open(sprite_sheet)
         self.sprite_pixels = sprites.load()
         self.sprite_metadata = sprite_sheet_metadata
+
+        self.animations = {
+            "idle": Animation(g_sprite_metadata["bubble-loop"]),
+            "startle": Animation(g_sprite_metadata["startle"]),
+        }
+
+        self.state = "idle"
+        self.frames_in_state = 0
+
+        self.hotword_detected = False
 
     def bubble_loop(self):
         bubble = self.sprite_metadata["bubble-loop"]
@@ -57,15 +83,54 @@ class Franklin:
             # Advance to the next frame.
             swim_frame += direction
 
+    def startle(self):
+        startle = self.sprite_metadata["startle"]
+        display_sprite(startle[0], self.sprite_pixels)
+        time.sleep(1)
+
     def idle(self):
         self.bubble_loop()
         self.swim_loop()
         self.swim_loop()
 
+    def get_next_frame(self):
+        return self.animations[self.state].get_frame(self.frames_in_state)
+
+    def update_state(self):
+        if self.state == "startle":
+            if self.frames_in_state > 50:
+                self.state = "idle"
+                self.frames_in_state = 0
+                self.hotword_detected = False
+
+        elif self.state == "idle":
+            if self.hotword_detected:
+                self.state = "startle"
+                self.frames_in_state = 0
+
+    def display_frame(self):
+        next_frame = self.get_next_frame()
+        display_sprite(next_frame, self.sprite_pixels)
+
+    def handle_hotword(self):
+        self.hotword_detected = True
+
     def run(self):
+        # Set up hotword detection.
+        engine = PreciseEngine("precise-engine/precise-engine", "ok-franklin.pb")
+        runner = PreciseRunner(engine, on_activation=lambda: self.handle_hotword())
+        runner.start()
+
         try:
             while True:
-                self.idle()
+                # Advance state machine.
+                self.update_state()
+
+                # Display a frame.
+                self.display_frame()
+                time.sleep(0.016)
+
+                self.frames_in_state += 1
 
         except KeyboardInterrupt:
             return
